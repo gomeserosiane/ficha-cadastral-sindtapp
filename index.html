@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Formulário de Cadastro | SINDTAPP &amp; Grupo Blue</title>
+  <link href="css/style.css" rel="stylesheet" />
+  <link href="css/responsivo.css" rel="stylesheet" />
+</head>
+
+<body>
+  <!-- TELA INICIAL -->
+  <main class="welcome-screen" id="welcome-screen">
+    <section class="welcome-card">
+      <div class="welcome-header">
+        <img alt="Cabeçalho inicial" class="welcome-header-image" src="img/hero.png" />
+      </div>
+      <div class="welcome-hero">
+        <h1>CLUBE DE BENEFÍCIOS SINDTAPP</h1>
+        <h2>ORAL BLUE, MAIS BLUE & SABEMI</h2>
+      </div>
+      <div id="form-wrapper">
+        <form class="form-page active-form" id="cadastroForm1">
+
+          <section class="form-section proponent-section">
+            <div class="section-title-row">
+              <h2>Dados do Proponente Titular</h2>
+              <button class="btn btn-value valor-pessoa-btn" type="button" disabled>Valor por pessoa: R$ 35,00</button>
+            </div>
+            <div class="grid">
+              <div class="field full">
+                <label for="f1_nome">Nome:</label>
+                <input id="f1_nome" name="nome" required="" type="text" />
+              </div>
+              <div class="field">
+                <label for="f1_rg">RG:</label>
+                <input id="f1_rg" name="rg" type="text" />
+              </div>
+              <div class="field">
+                <label for="f1_cpf">CPF:</label>
+                <input id="f1_cpf" name="cpf" type="text" />
+              </div>
+              <div class="field">
+                <label for="f1_sexo">Sexo:</label>
+                <select id="f1_sexo" name="sexo" required="">
+                  <option value="">Selecione</option>
+                  <option value="Feminino">Feminino</option>
+                  <option value="Masculino">Masculino</option>
+                  <option value="Outro">Outro</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="f1_admissao">Data da admissão:</label>
+                <input id="f1_admissao" name="admissao" type="date" />
+              </div>
+              <div class="field">
+                <label for="f1_nascimento">Data de nascimento:</label>
+                <input id="f1_nascimento" name="nascimento" type="date" />
+              </div>
+              <div class="field">
+                <label for="f1_tipoSanguineo">Tipo sanguíneo:</label>
+                <select id="f1_tipoSanguineo" name="tipoSanguineo">
+                  <option value="">Selecione</option>
+                  <option>A+</option>
+                  <option>A-</option>
+                  <option>B+</option>
+                  <option>B-</option>
+                  <option>AB+</option>
+                  <option>AB-</option>
+                  <option>O+</option>
+                  <option>O-</option>
+                  <option>Não sei</option>
+                </select>
+              </div>
+              <div class="field full">
+                <label for="f1_endereco">Endereço:</label>
+                <input id="f1_endereco" name="endereco" type="text" />
+              </div>
+              <div class="field">
+                <label for="f1_cep">CEP:</label>
+                <input id="f1_cep" maxlength="9" name="cep" type="text" />
+              </div>
+              <div class="field">
+                <label for="f1_bairro">Bairro:</label>
+                <input id="f1_bairro" name="bairro" type="text" />
+              </div>
+              <div class="field">
+                <label for="f1_cidade">Cidade:</label>
+                <input id="f1_cidade" name="cidade" type="text" />
+              </div>
+              <div class="field">
+                <label for="f1_uf">UF:</label>
+                <input id="f1_uf" maxlength="2" name="uf" type="text" />
+              </div>
+              <div class="field">
+                <label for="f1_telefone">Telefone WhatsApp:</label>
+                <input id="f1_telefone" name="telefone" type="text" />
+              </div>
+              <div class="field full">
+                <label for="f1_email">E-mail:</label>
+                <input id="f1_email" name="email" required="" type="email" />
+              </div>
+              <div class="field">
+                <label for="f1_estadoCivil">Estado civil:</label>
+                <select id="f1_estadoCivil" name="estadoCivil">
+                  <option value="">Selecione</option>
+                  <option>Solteiro(a)</option>
+                  <option>Casado(a)</option>
+                  <option>União Estável</option>
+                  <option>Divorciado(a)</option>
+                  <option>Viúvo(a)</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="f1_cargo">Cargo:</label>
+                <input id="f1_cargo" name="cargo" type="text" />
+              </div>
+              <div class="field">
+                <label for="f1_lotacao">Lotação:</label>
+                <input id="f1_lotacao" name="lotacao" type="text" />
+              </div>
+              <div class="field">
+                <label for="f1_situacaoFuncional">Situação funcional:</label>
+                <select id="f1_situacaoFuncional" name="situacaoFuncional">
+                  <option value="">Selecione</option>
+                  <option value="Ativo">Ativo</option>
+                  <option value="Aposentado">Aposentado</option>
+                </select>
+              </div>
+            </div>
+          </section>
+          <section class="form-section" id="dados-pagador-section">
+            <h2>Dados do Responsável Financeiro</h2>
+            <div class="grid">
+              <div class="field full">
+                <label for="pagador_nome">Nome:</label>
+                <input id="pagador_nome" name="pagador_nome" type="text" />
+              </div>
+              <div class="field">
+                <label for="pagador_rg">RG:</label>
+                <input id="pagador_rg" name="pagador_rg" type="text" />
+              </div>
+              <div class="field">
+                <label for="pagador_cpf">CPF:</label>
+                <input id="pagador_cpf" name="pagador_cpf" type="text" />
+              </div>
+              <div class="field">
+                <label for="pagador_sexo">Sexo:</label>
+                <select id="pagador_sexo" name="pagador_sexo">
+                  <option value="">Selecione</option>
+                  <option value="Feminino">Feminino</option>
+                  <option value="Masculino">Masculino</option>
+                  <option value="Outro">Outro</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="pagador_admissao">Data da admissão:</label>
+                <input id="pagador_admissao" name="pagador_admissao" type="date" />
+              </div>
+              <div class="field">
+                <label for="pagador_nascimento">Data de nascimento:</label>
+                <input id="pagador_nascimento" name="pagador_nascimento" type="date" />
+              </div>
+              <div class="field">
+                <label for="pagador_tipoSanguineo">Tipo sanguíneo:</label>
+                <select id="pagador_tipoSanguineo" name="pagador_tipoSanguineo">
+                  <option value="">Selecione</option>
+                  <option>A+</option>
+                  <option>A-</option>
+                  <option>B+</option>
+                  <option>B-</option>
+                  <option>AB+</option>
+                  <option>AB-</option>
+                  <option>O+</option>
+                  <option>O-</option>
+                  <option>Não sei</option>
+                </select>
+              </div>
+              <div class="field full">
+                <label for="pagador_endereco">Endereço:</label>
+                <input id="pagador_endereco" name="pagador_endereco" type="text" />
+              </div>
+              <div class="field">
+                <label for="pagador_cep">CEP:</label>
+                <input id="pagador_cep" maxlength="9" name="pagador_cep" type="text" />
+              </div>
+              <div class="field">
+                <label for="pagador_bairro">Bairro:</label>
+                <input id="pagador_bairro" name="pagador_bairro" type="text" />
+              </div>
+              <div class="field">
+                <label for="pagador_cidade">Cidade:</label>
+                <input id="pagador_cidade" name="pagador_cidade" type="text" />
+              </div>
+              <div class="field">
+                <label for="pagador_uf">UF:</label>
+                <input id="pagador_uf" maxlength="2" name="pagador_uf" type="text" />
+              </div>
+              <div class="field">
+                <label for="pagador_telefone">Telefone WhatsApp:</label>
+                <input id="pagador_telefone" name="pagador_telefone" type="text" />
+              </div>
+              <div class="field full">
+                <label for="pagador_email">E-mail:</label>
+                <input id="pagador_email" name="pagador_email" type="email" />
+              </div>
+              <div class="field">
+                <label for="pagador_estadoCivil">Estado civil:</label>
+                <select id="pagador_estadoCivil" name="pagador_estadoCivil">
+                  <option value="">Selecione</option>
+                  <option>Solteiro(a)</option>
+                  <option>Casado(a)</option>
+                  <option>União Estável</option>
+                  <option>Divorciado(a)</option>
+                  <option>Viúvo(a)</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="pagador_cargo">Cargo:</label>
+                <input id="pagador_cargo" name="pagador_cargo" type="text" />
+              </div>
+              <div class="field">
+                <label for="pagador_lotacao">Lotação:</label>
+                <input id="pagador_lotacao" name="pagador_lotacao" type="text" />
+              </div>
+              <div class="field">
+                <label for="pagador_situacaoFuncional">Situação funcional:</label>
+                <select id="pagador_situacaoFuncional" name="pagador_situacaoFuncional">
+                  <option value="">Selecione</option>
+                  <option value="Ativo">Ativo</option>
+                  <option value="Aposentado">Aposentado</option>
+                </select>
+              </div>
+            </div>
+          </section>
+          <section class="form-section">
+            <h2>Dados dos Proponentes Vinculados</h2>
+            <div id="proponentes-container"></div>
+            <button class="btn btn-secondary" id="addProponenteBtn" type="button">
+              + Adicionar Proponente
+            </button>
+          </section>
+
+          <section class="form-section payment-section">
+            <div class="section-title-row payment-title-row">
+              <h2>Forma de pagamento</h2>
+              <div class="percentage-box">
+                <button class="btn btn-lime" id="gerarTotalBtn" type="button">
+                  Gerar Total
+                </button>
+                <div class="percentage-result">
+                  <label for="valorTotal">Total:</label>
+                  <output id="valorTotal">R$ 0,00</output>
+                </div>
+              </div>
+            </div>
+            <div class="payment-options" role="radiogroup" aria-label="Forma de pagamento">
+              <label class="payment-card">
+                <input type="radio" name="formaPagamento" value="boleto" />
+                <span>Boleto</span>
+              </label>
+              <label class="payment-card">
+                <input type="radio" name="formaPagamento" value="cartao_credito" />
+                <span>Cartão de crédito</span>
+              </label>
+              <label class="payment-card">
+                <input type="radio" name="formaPagamento" value="debito_conta" />
+                <span>Débito em conta</span>
+              </label>
+              <label class="payment-card">
+                <input type="radio" name="formaPagamento" value="desconto_folha" />
+                <span>Desconto em folha de pagamento</span>
+              </label>
+            </div>
+
+            <div class="payment-details" id="pagamento-boleto" data-payment-panel="boleto" hidden>
+              <h3>Boleto</h3>
+              <div class="grid">
+                <div class="field full">
+                  <label>Escolha o melhor dia para pagamento:</label>
+                  <div class="radio-inline-group">
+                    <label><input type="radio" name="boletoDia" value="5" /> Dia 5</label>
+                    <label><input type="radio" name="boletoDia" value="10" /> Dia 10</label>
+                    <label><input type="radio" name="boletoDia" value="15" /> Dia 15</label>
+                    <label><input type="radio" name="boletoDia" value="20" /> Dia 20</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="payment-details" id="pagamento-cartao" data-payment-panel="cartao_credito" hidden>
+              <h3>Cartão de crédito</h3>
+              <div class="grid">
+                <div class="field full">
+                  <label for="cartao_nome">Nome impresso no cartão:</label>
+                  <input id="cartao_nome" name="cartao_nome" type="text" autocomplete="cc-name" />
+                </div>
+                <div class="field full">
+                  <label for="cartao_numero">Número do cartão:</label>
+                  <input id="cartao_numero" name="cartao_numero" type="text" inputmode="numeric"
+                    autocomplete="cc-number" />
+                </div>
+                <div class="field">
+                  <label for="cartao_validade">Validade:</label>
+                  <input id="cartao_validade" name="cartao_validade" type="text" placeholder="MM/AA"
+                    autocomplete="cc-exp" />
+                </div>
+                <div class="field">
+                  <label for="cartao_cvv">CVV:</label>
+                  <input id="cartao_cvv" name="cartao_cvv" type="text" inputmode="numeric" maxlength="4"
+                    autocomplete="cc-csc" />
+                </div>
+              </div>
+            </div>
+
+            <div class="payment-details" id="pagamento-debito" data-payment-panel="debito_conta" hidden>
+              <h3>Débito em conta</h3>
+              <div class="grid">
+                <div class="field">
+                  <label for="debito_tipo_conta">Tipo de conta:</label>
+                  <select id="debito_tipo_conta" name="debito_tipo_conta">
+                    <option value="">Selecione</option>
+                    <option value="Conta corrente">Conta corrente</option>
+                    <option value="Conta poupança">Conta poupança</option>
+                    <option value="Conta salário">Conta salário</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="debito_banco">Banco:</label>
+                  <input id="debito_banco" name="debito_banco" type="text" />
+                </div>
+                <div class="field">
+                  <label for="debito_agencia">Agência:</label>
+                  <input id="debito_agencia" name="debito_agencia" type="text" />
+                </div>
+                <div class="field">
+                  <label for="debito_conta">Conta:</label>
+                  <input id="debito_conta" name="debito_conta" type="text" />
+                </div>
+              </div>
+            </div>
+
+            <div class="payment-details" id="pagamento-folha" data-payment-panel="desconto_folha" hidden>
+              <h3>Desconto em folha de pagamento</h3>
+              <div class="grid">
+                <div class="field">
+                  <label for="folha_matricula">N° da matrícula:</label>
+                  <input id="folha_matricula" name="folha_matricula" type="text" />
+                </div>
+                <div class="field">
+                  <label for="folha_orgao">Nome do órgão:</label>
+                  <input id="folha_orgao" name="folha_orgao" type="text" />
+                </div>
+                <div class="field full">
+                  <label>Esfera do órgão:</label>
+                  <div class="radio-inline-group">
+                    <label><input type="radio" name="folha_esfera" value="Federal" /> Federal</label>
+                    <label><input type="radio" name="folha_esfera" value="Estadual" /> Estadual</label>
+                    <label><input type="radio" name="folha_esfera" value="Municipal" /> Municipal</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <p class="payment-note">
+              Atesto para os devidos fins ou aquém interessar, que essas informações são verídicas. 
+              Da mesma forma que autorizo o SINDTAPP/PA a proceder com os meios legais para fazer a cobrança 
+              por meio da via de pagamento que escolhi para prosseguir com a assinatura deste contrato de 
+              plano/benefício.
+            </p>
+
+          </section>
+
+
+          <section class="form-section signature-section" id="assinatura-section">
+            <div class="section-title-row">
+              <h2>Assinatura digital</h2>
+              <span class="signature-required">Obrigatório</span>
+            </div>
+            <p class="signature-help">
+              Para dar prosseguimento no seu cadastro, faça a sua assinatura digital no espaço em branco abaixo.
+            </p>
+            <div class="signature-pad-wrap">
+              <canvas id="signatureCanvas" class="signature-canvas" aria-label="Campo para assinatura digital"></canvas>
+            </div>
+            <div class="signature-actions">
+              <button class="btn btn-secondary" id="clearSignatureBtn" type="button">Limpar assinatura</button>
+              <span id="signatureStatus" class="signature-status">Nenhuma assinatura feita.</span>
+            </div>
+          </section>
+
+          <section class="form-actions">
+            <button class="btn btn-primary submit-btn" type="submit">
+              Enviar formulário
+            </button>
+          </section>
+
+        </form>
+
+        <footer class="site-footer">
+          <p>Endereço: Av. João Paulo II, nº 2112, CEP: 66610-770, Bairro do Castanheira – Belém/PA</p>
+          <p>CNPJ: 31.428.552/0001-29 – Fone: (91) 98194-2041 | (91) 99373-7111</p>
+          <p>Email: sindtapp@gmail.com | gomes852@hotmail.com</p>
+        </footer>
+
+      </div>
+
+    </section>
+  </main>
+  <!-- ÁREA DOS FORMULÁRIOS -->
+
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script src="js/script.js"></script>
+</body>
+
+</html>

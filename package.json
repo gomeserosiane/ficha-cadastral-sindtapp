@@ -1,0 +1,20 @@
+{
+  "name": "sindtapp-formulario-assinafy",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "start": "vercel dev"
+  },
+  "dependencies": {
+    "formidable": "^3.5.2",
+    "nodemailer": "^6.9.16"
+  },
+  "devDependencies": {
+    "vercel": "latest"
+  },
+  "engines": {
+    "node": "24.x"
+  }
+}

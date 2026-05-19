@@ -1,0 +1,106 @@
+@media (max-width: 768px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    form {
+        padding: 18px;
+    }
+
+    .form-section {
+        padding: 18px;
+        margin: 22px 8px 0;
+    }
+
+    .form-actions {
+        justify-content: stretch;
+    }
+
+    .form-actions .btn {
+        width: 100%;
+    }
+
+    input,
+    select,
+    textarea {
+        width: 95%;
+    }
+
+    .section-inner-header {
+        margin: -18px -18px 18px -18px;
+    }
+
+    .welcome-card {
+        width: 100%;
+    }
+
+    .welcome-header-image {
+        height: 150px;
+    }
+
+    .welcome-hero h1 {
+        font-size: 1.7rem;
+    }
+
+    .proponente-top {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+@media (max-width: 560px) {
+  .percentage-box,
+  .percentage-result,
+  .payer-alert-actions {
+    width: 100%;
+  }
+
+  .percentage-box {
+    align-items: stretch;
+  }
+
+  .percentage-result {
+    justify-content: space-between;
+  }
+
+  .btn-lime,
+  .payer-alert-actions .btn {
+    width: 100%;
+  }
+}
+
+
+@media (max-width: 768px) {
+  .section-title-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .btn-value {
+    width: 100%;
+  }
+
+  .proponente-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .proponente-actions .btn {
+    flex: 1 1 180px;
+  }
+}
+
+
+@media (max-width: 900px) {
+  .payment-options,
+  .site-footer {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .payment-title-row .percentage-box {
+    margin-left: 0;
+    justify-content: flex-start;
+  }
+}
+
