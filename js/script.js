@@ -763,8 +763,20 @@ async function iniciarAssinaturaAssinafyComRetry(documentId) {
   let ultimoResultado = null;
 
   for (let tentativa = 1; tentativa <= maxTentativas; tentativa++) {
+    const startBody = window.__ultimoPayloadAssinafy || {};
+    const proponente = startBody.dadosProponente || {};
+
     const response = await fetch(`/api/start-assignment?documentId=${encodeURIComponent(documentId)}`, {
-      method: "GET",
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        documentId,
+        proponenteEmail: proponente.email,
+        proponenteName: proponente.nome,
+        recipientEmail: proponente.email,
+        recipientName: proponente.nome,
+        documentName: window.__ultimoFilenameAssinafy || "ficha-sindtapp.pdf",
+      }),
     });
 
     const result = await response.json().catch(() => ({}));
@@ -821,6 +833,8 @@ async function processarEnvio(event) {
     }
 
     if (submitBtn) submitBtn.textContent = "Enviando para Assinafy...";
+    window.__ultimoPayloadAssinafy = payload;
+    window.__ultimoFilenameAssinafy = filename;
     const resultadoAssinafy = await enviarPdfParaAssinafy(pdfBlob, filename, payload);
 
     if (submitBtn) submitBtn.textContent = "Aguardando processamento da Assinafy...";
