@@ -23,7 +23,6 @@ export default async function handler(req, res) {
 
     const documentData = await getDocumentData(documentId);
     const status = getDocumentStatus(documentData);
-
     const method = process.env.ASSINAFY_SIGNATURE_METHOD || "collect";
 
     if (!documentData || isDocumentBlockedForAssignment(documentData, method)) {
@@ -39,20 +38,9 @@ export default async function handler(req, res) {
 
     const metadata = getDocumentMetadata(documentId) || {};
 
-    const signerEmail =
-      metadata.sindicatoSignerEmail ||
-      process.env.ASSINAFY_SIGNER_EMAIL ||
-      process.env.ASSINAFY_ADMIN_SIGNER_EMAIL;
-
-    const signerName =
-      metadata.sindicatoSignerName ||
-      process.env.ASSINAFY_SIGNER_NAME ||
-      process.env.ASSINAFY_ADMIN_SIGNER_NAME ||
-      "Representante do Sindicato";
-
-    if (!signerEmail) {
+    if (!metadata.proponenteEmail) {
       return sendJson(res, 500, {
-        message: "Não encontrei o e-mail do signatário. Configure ASSINAFY_SIGNER_EMAIL.",
+        message: "Não encontrei os dados do proponente para criar o 1º signatário. Reenvie o formulário para registrar os metadados corretamente.",
       });
     }
 
@@ -60,8 +48,6 @@ export default async function handler(req, res) {
       baseUrl: getAssinafyBaseUrl(),
       accountId: process.env.ASSINAFY_ACCOUNT_ID,
       documentId,
-      signerEmail,
-      signerName,
       metadata,
     });
 
@@ -69,18 +55,17 @@ export default async function handler(req, res) {
       ...metadata,
       assignmentStatus: "created",
       assignment: assignmentResult?.assignment || assignmentResult,
-      signerInvitation: assignmentResult?.signerInvitation || null,
+      signerInvitations: assignmentResult?.signerInvitations || null,
       assignmentCreatedAt: new Date().toISOString(),
     });
 
     return sendJson(res, 200, {
-      message: assignmentResult?.signerInvitation?.sent
-        ? "Atribuição criada e convite enviado ao signatário por e-mail."
-        : "Atribuição criada, mas não foi possível confirmar o envio do convite por e-mail.",
+      message: "Atribuição criada para PROPONENTE e SINDICATO na Assinafy.",
       documentId,
-      signerEmail,
+      proponenteEmail: metadata.proponenteEmail,
+      sindicatoSignerEmail: metadata.sindicatoSignerEmail,
       assignmentCreated: true,
-      signerInvitation: assignmentResult?.signerInvitation || null,
+      signerInvitations: assignmentResult?.signerInvitations || null,
       assignment: assignmentResult?.assignment || assignmentResult,
     });
   } catch (error) {

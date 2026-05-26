@@ -6,7 +6,7 @@ import {
   getDocumentData,
 } from "../lib/assinafy.js";
 import { saveDocumentMetadata } from "../lib/document-store.js";
-import { isValidEmail, sendSignerInvitationEmail } from "../lib/email.js";
+import { getConfiguredFinalRecipients, isValidEmail, sendSignerInvitationEmail } from "../lib/email.js";
 
 export const config = {
   api: {
@@ -23,15 +23,22 @@ export default async function handler(req, res) {
     const accountId = process.env.ASSINAFY_ACCOUNT_ID;
     const baseUrl = getAssinafyBaseUrl();
 
-    const signerEmail = process.env.ASSINAFY_SIGNER_EMAIL || process.env.ASSINAFY_ADMIN_SIGNER_EMAIL;
-    const signerName = process.env.ASSINAFY_SIGNER_NAME || process.env.ASSINAFY_ADMIN_SIGNER_NAME || "Representante do Sindicato";
+    const sindicatoSignerEmail = process.env.ASSINAFY_SIGNER_EMAIL || process.env.ASSINAFY_ADMIN_SIGNER_EMAIL;
+    const sindicatoSignerName = process.env.ASSINAFY_SIGNER_NAME || process.env.ASSINAFY_ADMIN_SIGNER_NAME || "Representante do Sindicato";
 
     if (!accountId) return sendJson(res, 500, { message: "Configure ASSINAFY_ACCOUNT_ID na Vercel." });
     if (!process.env.ASSINAFY_API_KEY && !process.env.ASSINAFY_ACCESS_TOKEN) {
       return sendJson(res, 500, { message: "Configure ASSINAFY_API_KEY ou ASSINAFY_ACCESS_TOKEN na Vercel." });
     }
-    if (!signerEmail || !isValidEmail(signerEmail)) {
-      return sendJson(res, 500, { message: "Configure ASSINAFY_SIGNER_EMAIL com o e-mail do signatário." });
+    if (!sindicatoSignerEmail || !isValidEmail(sindicatoSignerEmail)) {
+      return sendJson(res, 500, { message: "Configure ASSINAFY_SIGNER_EMAIL com o e-mail do signatário do sindicato." });
+    }
+
+    const finalRecipients = getConfiguredFinalRecipients().slice(0, 2);
+    if (finalRecipients.length < 1) {
+      return sendJson(res, 500, {
+        message: "Configure pelo menos 1 e-mail final na Vercel: FINAL_DOCUMENT_EMAIL ou FINAL_DOCUMENT_EMAILS. Para 2 destinatários, use FINAL_DOCUMENT_EMAILS separado por vírgula ou FINAL_DOCUMENT_EMAIL_1 e FINAL_DOCUMENT_EMAIL_2.",
+      });
     }
 
     const { fields, files } = await parseMultipartForm(req);
@@ -49,22 +56,17 @@ export default async function handler(req, res) {
       requestedDocumentName || uploadedFile.originalFilename || `ficha-${slugify(proponenteName)}.pdf`
     );
 
-    const finalRecipients = buildFinalRecipients({
-      proponenteEmail,
-      signerEmail,
-      extraEmails: [process.env.FINAL_DOCUMENT_EMAIL_1, process.env.FINAL_DOCUMENT_EMAIL_2],
-    });
-
     const metadata = {
       proponenteEmail,
       proponenteName,
-      sindicatoSignerEmail: signerEmail,
-      sindicatoSignerName: signerName,
+      sindicatoSignerEmail,
+      sindicatoSignerName,
       finalRecipients,
       documentName,
       createdAt: new Date().toISOString(),
-      flow: "sindtapp-document-signature-email-final-v3",
+      flow: "sindtapp-dois-signatarios-assinafy-v4",
       assignmentStatus: "pending",
+      assinaturaManualRemovida: true,
     };
 
     const fileBuffer = await fs.readFile(uploadedFile.filepath);
@@ -74,7 +76,6 @@ export default async function handler(req, res) {
       accountId,
       fileBuffer,
       filename: documentName,
-      metadata,
     });
 
     const documentId = getDocumentId(documentResult);
@@ -88,19 +89,11 @@ export default async function handler(req, res) {
 
     saveDocumentMetadata(documentId, metadata);
 
-    // IMPORTANTE:
-    // Não criamos a atribuição nesta mesma requisição. A Assinafy pode devolver o documento
-    // com status metadata_processing por alguns segundos. Se tentarmos criar a atribuição
-    // neste momento, a API retorna erro.
-    //
-    // Por isso, o fluxo agora é em 2 etapas:
-    // 1) /api/assinafy-upload cria apenas o documento;
-    // 2) o front chama /api/start-assignment em loop até a Assinafy permitir criar a atribuição.
     return sendJson(res, 202, {
-      message: "Documento criado na Assinafy. A assinatura será iniciada assim que o processamento terminar.",
+      message: "Documento criado na Assinafy. A assinatura dos 2 signatários será iniciada assim que o processamento terminar.",
       documentId,
-      signerEmail,
       proponenteEmail,
+      sindicatoSignerEmail,
       finalRecipients,
       nextStep: `/api/start-assignment?documentId=${documentId}`,
       assignmentCreated: false,
@@ -111,60 +104,73 @@ export default async function handler(req, res) {
   }
 }
 
-export async function startAssignmentFlow({ baseUrl, accountId, documentId, signerEmail, signerName, metadata }) {
-  const signer = await findOrCreateSigner({
-    baseUrl,
-    accountId,
-    fullName: signerName,
-    email: signerEmail,
-  });
+export async function startAssignmentFlow({ baseUrl, accountId, documentId, metadata }) {
+  const proponenteEmail = metadata?.proponenteEmail;
+  const proponenteName = metadata?.proponenteName || "Proponente";
+  const sindicatoSignerEmail = metadata?.sindicatoSignerEmail || process.env.ASSINAFY_SIGNER_EMAIL || process.env.ASSINAFY_ADMIN_SIGNER_EMAIL;
+  const sindicatoSignerName = metadata?.sindicatoSignerName || process.env.ASSINAFY_SIGNER_NAME || process.env.ASSINAFY_ADMIN_SIGNER_NAME || "Representante do Sindicato";
 
-  const signerId = signer?.id || signer?.uuid || signer?.signer_id;
-
-  if (!signerId) {
-    throw new Error("Documento criado, mas não consegui criar/localizar o signatário.");
+  if (!proponenteEmail || !isValidEmail(proponenteEmail)) {
+    throw new Error("Não encontrei o e-mail do proponente para criar o 1º signatário na Assinafy.");
+  }
+  if (!sindicatoSignerEmail || !isValidEmail(sindicatoSignerEmail)) {
+    throw new Error("Não encontrei o e-mail do sindicato para criar o 2º signatário na Assinafy.");
   }
 
-  const assignment = await createAssignment({
+  const [proponenteSigner, sindicatoSigner] = await Promise.all([
+    findOrCreateSigner({ baseUrl, accountId, fullName: proponenteName, email: proponenteEmail }),
+    findOrCreateSigner({ baseUrl, accountId, fullName: sindicatoSignerName, email: sindicatoSignerEmail }),
+  ]);
+
+  const proponenteSignerId = getSignerId(proponenteSigner);
+  const sindicatoSignerId = getSignerId(sindicatoSigner);
+
+  if (!proponenteSignerId) throw new Error("Não consegui criar/localizar o signatário PROPONENTE na Assinafy.");
+  if (!sindicatoSignerId) throw new Error("Não consegui criar/localizar o signatário SINDICATO na Assinafy.");
+
+  const assignmentMetadata = {
+    ...metadata,
+    proponenteSignerId,
+    sindicatoSignerId,
+    assignmentStatus: "created",
+    assignmentCreatedAt: new Date().toISOString(),
+  };
+
+  const assignment = await createAssignmentForTwoSigners({
     baseUrl,
     documentId,
-    signerId,
-    signerEmail,
-    signerName,
-    metadata: {
-      ...metadata,
-      signerId,
-      assignmentStatus: "created",
-      assignmentCreatedAt: new Date().toISOString(),
-    },
+    proponenteSignerId,
+    proponenteEmail,
+    proponenteName,
+    sindicatoSignerId,
+    sindicatoSignerEmail,
+    sindicatoSignerName,
+    metadata: assignmentMetadata,
   });
 
-  const signerInvitation = await notifySignerBySmtp({
+  const signerInvitations = await notifySignersBySmtp({
     assignment,
-    signerEmail,
-    signerName,
+    signers: [
+      { email: proponenteEmail, name: proponenteName, role: "PROPONENTE" },
+      { email: sindicatoSignerEmail, name: sindicatoSignerName, role: "SINDICATO" },
+    ],
     documentName: metadata?.documentName,
   });
 
   saveDocumentMetadata(documentId, {
-    ...metadata,
-    signerId,
+    ...assignmentMetadata,
     assignment,
-    signerInvitation,
-    assignmentStatus: "created",
-    assignmentCreatedAt: new Date().toISOString(),
+    signerInvitations,
   });
 
   return {
     assignment,
-    signerInvitation,
+    signerInvitations,
   };
 }
 
-async function uploadPdfToDocuments({ baseUrl, accountId, fileBuffer, filename, metadata }) {
+async function uploadPdfToDocuments({ baseUrl, accountId, fileBuffer, filename }) {
   const formData = new FormData();
-  // A Assinafy espera o upload do documento como multipart contendo apenas o campo "file".
-  // Metadados do fluxo ficam guardados no backend deste projeto após a API retornar o documentId.
   formData.append("file", new Blob([fileBuffer], { type: "application/pdf" }), filename);
 
   const response = await fetch(`${baseUrl}/accounts/${accountId}/documents`, {
@@ -180,41 +186,51 @@ async function uploadPdfToDocuments({ baseUrl, accountId, fileBuffer, filename, 
 }
 
 async function findOrCreateSigner({ baseUrl, accountId, fullName, email }) {
-  const searchUrl = `${baseUrl}/accounts/${accountId}/signers?search=${encodeURIComponent(email)}`;
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  const searchUrl = `${baseUrl}/accounts/${accountId}/signers?search=${encodeURIComponent(normalizedEmail)}`;
   const listResponse = await fetch(searchUrl, { headers: getAssinafyHeaders() });
   const listData = await listResponse.json().catch(() => null);
 
   const signers = Array.isArray(listData?.data) ? listData.data : [];
-  const existing = signers.find((signer) => String(signer.email || "").toLowerCase() === email.toLowerCase());
+  const existing = signers.find((signer) => String(signer.email || "").toLowerCase() === normalizedEmail);
   if (existing) return existing;
 
   const response = await fetch(`${baseUrl}/accounts/${accountId}/signers`, {
     method: "POST",
     headers: { ...getAssinafyHeaders(), "Content-Type": "application/json" },
-    body: JSON.stringify({ full_name: fullName, name: fullName, email }),
+    body: JSON.stringify({ full_name: fullName, name: fullName, email: normalizedEmail }),
   });
 
   const data = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(data?.message || data?.error || `Erro ao criar signatário ${email} na Assinafy.`);
+  if (!response.ok) throw new Error(data?.message || data?.error || `Erro ao criar signatário ${normalizedEmail} na Assinafy.`);
   return data?.data || data;
 }
 
-async function createAssignment({ baseUrl, documentId, signerId, signerEmail, signerName, metadata }) {
+function getSignerId(signer = {}) {
+  return signer?.id || signer?.uuid || signer?.signer_id;
+}
+
+async function createAssignmentForTwoSigners({
+  baseUrl,
+  documentId,
+  proponenteSignerId,
+  proponenteEmail,
+  proponenteName,
+  sindicatoSignerId,
+  sindicatoSignerEmail,
+  sindicatoSignerName,
+  metadata,
+}) {
   const method = String(process.env.ASSINAFY_SIGNATURE_METHOD || "collect").toLowerCase();
 
   if (method === "virtual") {
     const body = {
       method: "virtual",
       signers: [
-        {
-          id: signerId,
-          verification_method: "Email",
-          notification_methods: ["Email"],
-        },
+        buildSignerPayload(proponenteSignerId),
+        buildSignerPayload(sindicatoSignerId),
       ],
-      message:
-        process.env.ASSINAFY_SIGNATURE_MESSAGE ||
-        "Olá! Por favor, assine o documento enviado pelo SINDTAPP/PA.",
+      message: process.env.ASSINAFY_SIGNATURE_MESSAGE || "Olá! Por favor, assine o documento enviado pelo SINDTAPP/PA.",
       metadata,
       custom_data: metadata,
     };
@@ -230,37 +246,48 @@ async function createAssignment({ baseUrl, documentId, signerId, signerEmail, si
   }
 
   const signatureFieldId = await resolveSignatureFieldId({ baseUrl, accountId: process.env.ASSINAFY_ACCOUNT_ID });
-  const signaturePosition = getSindicatoSignatureDisplaySettings(page);
+  const proponentePosition = getProponenteSignatureDisplaySettings(page);
+  const sindicatoPosition = getSindicatoSignatureDisplaySettings(page);
 
   const body = {
     method: "collect",
     signers: [
-      {
-        id: signerId,
-        verification_method: "Email",
-        notification_methods: ["Email"],
-      },
+      buildSignerPayload(proponenteSignerId),
+      buildSignerPayload(sindicatoSignerId),
     ],
     entries: [
       {
         page_id: page.id,
         fields: [
           {
-            signer_id: signerId,
+            signer_id: proponenteSignerId,
             field_id: signatureFieldId,
-            display_settings: signaturePosition,
+            display_settings: proponentePosition,
+          },
+          {
+            signer_id: sindicatoSignerId,
+            field_id: signatureFieldId,
+            display_settings: sindicatoPosition,
           },
         ],
       },
     ],
     message:
       process.env.ASSINAFY_SIGNATURE_MESSAGE ||
-      "Olá! Por favor, assine o documento no campo ASSINATURA DO SINDICATO.",
+      "Olá! Por favor, assine o documento no campo indicado para você na ficha SINDTAPP.",
     metadata,
     custom_data: metadata,
   };
 
   return postAssignment({ baseUrl, documentId, body });
+}
+
+function buildSignerPayload(signerId) {
+  return {
+    id: signerId,
+    verification_method: "Email",
+    notification_methods: ["Email"],
+  };
 }
 
 async function postAssignment({ baseUrl, documentId, body }) {
@@ -311,25 +338,42 @@ async function resolveSignatureFieldId({ baseUrl, accountId }) {
   return signatureField.id;
 }
 
-function getSindicatoSignatureDisplaySettings(page = {}) {
-  if (process.env.ASSINAFY_SIGNATURE_FIELD_JSON) {
+function getProponenteSignatureDisplaySettings(page = {}) {
+  if (process.env.ASSINAFY_PROPONENTE_SIGNATURE_FIELD_JSON) {
     try {
-      return JSON.parse(process.env.ASSINAFY_SIGNATURE_FIELD_JSON);
+      return JSON.parse(process.env.ASSINAFY_PROPONENTE_SIGNATURE_FIELD_JSON);
     } catch {
-      console.warn("ASSINAFY_SIGNATURE_FIELD_JSON inválido. Usando posição padrão.");
+      console.warn("ASSINAFY_PROPONENTE_SIGNATURE_FIELD_JSON inválido. Usando posição padrão.");
     }
   }
 
-  // A API da Assinafy usa o tamanho renderizado da página, normalmente maior que o PDF em pontos.
-  // O PDF modelo tem ~595x842 pontos; no retorno da Assinafy o exemplo comum vem em ~1275x2100.
-  // A área "ASSINATURA DO SINDICATO" fica no canto inferior direito da primeira página,
-  // com o pontilhado em aproximadamente y=764 e o texto logo abaixo.
-  // Portanto, o campo deve começar acima do pontilhado, sem cobrir a legenda.
   const widthScale = Number(page.width || 1275) / 595;
   const heightScale = Number(page.height || 2100) / 842;
 
   return {
-    // Alinhado ao bloco direito, exatamente acima de "ASSINATURA DO SINDICATO".
+    left: Math.round(50 * widthScale),
+    top: Math.round(724 * heightScale),
+    width: Math.round(170 * widthScale),
+    height: Math.round(36 * heightScale),
+    fontSize: 18,
+    fontFamily: "Arial",
+    backgroundColor: "rgb(195, 230, 203)",
+  };
+}
+
+function getSindicatoSignatureDisplaySettings(page = {}) {
+  if (process.env.ASSINAFY_SINDICATO_SIGNATURE_FIELD_JSON || process.env.ASSINAFY_SIGNATURE_FIELD_JSON) {
+    try {
+      return JSON.parse(process.env.ASSINAFY_SINDICATO_SIGNATURE_FIELD_JSON || process.env.ASSINAFY_SIGNATURE_FIELD_JSON);
+    } catch {
+      console.warn("ASSINAFY_SINDICATO_SIGNATURE_FIELD_JSON/ASSINAFY_SIGNATURE_FIELD_JSON inválido. Usando posição padrão.");
+    }
+  }
+
+  const widthScale = Number(page.width || 1275) / 595;
+  const heightScale = Number(page.height || 2100) / 842;
+
+  return {
     left: Math.round(382 * widthScale),
     top: Math.round(724 * heightScale),
     width: Math.round(164 * widthScale),
@@ -339,7 +383,6 @@ function getSindicatoSignatureDisplaySettings(page = {}) {
     backgroundColor: "rgb(195, 230, 203)",
   };
 }
-
 
 function extractSigningUrl(payload) {
   const urls = [];
@@ -386,30 +429,42 @@ function extractSigningUrl(payload) {
   return preferred || urls[0] || "";
 }
 
-async function notifySignerBySmtp({ assignment, signerEmail, signerName, documentName }) {
-  const signUrl = extractSigningUrl(assignment);
-
-  if (!signUrl) {
-    console.warn("[SINDTAPP] Atribuição criada, mas a Assinafy não retornou link de assinatura no payload.");
-    return {
-      sent: false,
-      reason: "A Assinafy não retornou link de assinatura no payload da atribuição.",
-    };
-  }
-
-  await sendSignerInvitationEmail({
-    to: signerEmail,
-    signerName,
-    documentName,
-    signUrl,
-  });
-
-  return {
-    sent: true,
-    signUrl,
-  };
+function extractSigningUrls(payload) {
+  const url = extractSigningUrl(payload);
+  return url ? [url] : [];
 }
 
+async function notifySignersBySmtp({ assignment, signers, documentName }) {
+  const signUrls = extractSigningUrls(assignment);
+  const firstUrl = signUrls[0] || "";
+
+  if (!firstUrl) {
+    console.warn("[SINDTAPP] Atribuição criada. A Assinafy deve enviar os convites, mas não retornou link direto no payload.");
+    return signers.map((signer) => ({
+      sent: false,
+      email: signer.email,
+      role: signer.role,
+      reason: "A Assinafy não retornou link direto. Convite fica por conta da notification_methods da Assinafy.",
+    }));
+  }
+
+  const results = [];
+  for (const signer of signers) {
+    try {
+      await sendSignerInvitationEmail({
+        to: signer.email,
+        signerName: signer.name,
+        documentName,
+        signUrl: firstUrl,
+      });
+      results.push({ sent: true, email: signer.email, role: signer.role });
+    } catch (error) {
+      results.push({ sent: false, email: signer.email, role: signer.role, reason: error?.message });
+    }
+  }
+
+  return results;
+}
 
 function parseMultipartForm(req) {
   const form = new IncomingForm({ multiples: false, keepExtensions: true, maxFileSize: 15 * 1024 * 1024 });
@@ -418,29 +473,29 @@ function parseMultipartForm(req) {
   });
 }
 
-function buildFinalRecipients({ proponenteEmail, signerEmail, extraEmails }) {
-  const emails = [proponenteEmail, signerEmail, ...extraEmails]
-    .map((email) => String(email || "").trim().toLowerCase())
-    .filter(isValidEmail);
-  return [...new Set(emails)].slice(0, 4);
-}
-
 function getSingleFile(fileValue) {
   return Array.isArray(fileValue) ? fileValue[0] : fileValue;
 }
 
-function getField(fieldValue) {
-  const value = Array.isArray(fieldValue) ? fieldValue[0] : fieldValue;
-  return String(value || "").trim();
+function getField(value) {
+  const normalized = Array.isArray(value) ? value[0] : value;
+  return String(normalized || "").trim();
 }
 
-function getDocumentId(data) {
-  return data?.data?.id || data?.id || data?.document?.id || data?.data?.document?.id || data?.uuid || "";
+function getDocumentId(documentResult) {
+  return (
+    documentResult?.id ||
+    documentResult?.document_id ||
+    documentResult?.uuid ||
+    documentResult?.data?.id ||
+    documentResult?.document?.id ||
+    ""
+  );
 }
 
 function normalizePdfFilename(value) {
-  const filename = String(value || "ficha-sindtapp.pdf").trim().replace(/[^a-zA-Z0-9À-ÿ._ -]/g, "").replace(/\s+/g, "-").toLowerCase();
-  return filename.endsWith(".pdf") ? filename : `${filename}.pdf`;
+  const filename = String(value || "documento.pdf").trim();
+  return filename.toLowerCase().endsWith(".pdf") ? filename : `${filename}.pdf`;
 }
 
 function slugify(value) {

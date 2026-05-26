@@ -36,14 +36,10 @@ const dadosPagadorSection = document.getElementById("dados-pagador-section");
 const submitBtn = document.querySelector(".submit-btn");
 const formaPagamentoRadios = document.querySelectorAll('input[name="formaPagamento"]');
 const paymentPanels = document.querySelectorAll("[data-payment-panel]");
-const signatureCanvas = document.getElementById("signatureCanvas");
-const clearSignatureBtn = document.getElementById("clearSignatureBtn");
-const signatureStatus = document.getElementById("signatureStatus");
 
 const VALOR_POR_PESSOA = 35;
 const MAX_PROPONENTES_VINCULADOS = 5;
 let pagadorAlertShown = false;
-let assinaturaRealizada = false;
 
 // ===============================
 // FUNÇÕES AUXILIARES
@@ -507,112 +503,10 @@ function getFormDataObject() {
     },
     proponentesAdicionais: getProponentesAdicionais(),
     formaPagamento: getFormaPagamento(),
-    assinaturaDataUrl: getSignatureDataUrl(),
   };
 }
 
 
-
-// ===============================
-// ASSINATURA DIGITAL
-// ===============================
-function setupSignaturePad() {
-  if (!signatureCanvas) return;
-
-  const ctx = signatureCanvas.getContext("2d");
-  let isDrawing = false;
-  let lastPoint = null;
-
-  function resizeCanvas() {
-    const ratio = Math.max(window.devicePixelRatio || 1, 1);
-    const rect = signatureCanvas.getBoundingClientRect();
-    const currentImage = assinaturaRealizada ? signatureCanvas.toDataURL("image/png") : null;
-
-    signatureCanvas.width = Math.max(1, Math.floor(rect.width * ratio));
-    signatureCanvas.height = Math.max(1, Math.floor(rect.height * ratio));
-
-    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-    ctx.lineWidth = 2.4;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.strokeStyle = "#111827";
-
-    if (currentImage) {
-      const img = new Image();
-      img.onload = () => ctx.drawImage(img, 0, 0, rect.width, rect.height);
-      img.src = currentImage;
-    }
-  }
-
-  function getPoint(event) {
-    const rect = signatureCanvas.getBoundingClientRect();
-    const source = event.touches?.[0] || event.changedTouches?.[0] || event;
-
-    return {
-      x: source.clientX - rect.left,
-      y: source.clientY - rect.top,
-    };
-  }
-
-  function startDrawing(event) {
-    event.preventDefault();
-    isDrawing = true;
-    lastPoint = getPoint(event);
-  }
-
-  function draw(event) {
-    if (!isDrawing || !lastPoint) return;
-    event.preventDefault();
-
-    const currentPoint = getPoint(event);
-    ctx.beginPath();
-    ctx.moveTo(lastPoint.x, lastPoint.y);
-    ctx.lineTo(currentPoint.x, currentPoint.y);
-    ctx.stroke();
-
-    lastPoint = currentPoint;
-    assinaturaRealizada = true;
-    atualizarStatusAssinatura();
-  }
-
-  function stopDrawing() {
-    isDrawing = false;
-    lastPoint = null;
-  }
-
-  signatureCanvas.addEventListener("mousedown", startDrawing);
-  signatureCanvas.addEventListener("mousemove", draw);
-  window.addEventListener("mouseup", stopDrawing);
-
-  signatureCanvas.addEventListener("touchstart", startDrawing, { passive: false });
-  signatureCanvas.addEventListener("touchmove", draw, { passive: false });
-  window.addEventListener("touchend", stopDrawing);
-  window.addEventListener("touchcancel", stopDrawing);
-
-  clearSignatureBtn?.addEventListener("click", limparAssinatura);
-  window.addEventListener("resize", resizeCanvas);
-  resizeCanvas();
-}
-
-function atualizarStatusAssinatura() {
-  if (!signatureStatus) return;
-  signatureStatus.textContent = assinaturaRealizada ? "Assinatura capturada." : "Nenhuma assinatura feita.";
-  signatureStatus.classList.toggle("signed", assinaturaRealizada);
-}
-
-function limparAssinatura() {
-  if (!signatureCanvas) return;
-  const ctx = signatureCanvas.getContext("2d");
-  const rect = signatureCanvas.getBoundingClientRect();
-  ctx.clearRect(0, 0, rect.width, rect.height);
-  assinaturaRealizada = false;
-  atualizarStatusAssinatura();
-}
-
-function getSignatureDataUrl() {
-  if (!signatureCanvas || !assinaturaRealizada) return "";
-  return signatureCanvas.toDataURL("image/png");
-}
 
 // ===============================
 // GERAÇÃO DO PDF + ENVIO PARA ASSINAFY
@@ -674,28 +568,6 @@ function drawCheckInBox(page, active, box, font) {
   });
 }
 
-
-async function drawSignatureOnPdf(pdfDoc, page, signatureDataUrl) {
-  if (!signatureDataUrl) return;
-
-  const signatureImageBytes = await fetch(signatureDataUrl).then((response) => response.arrayBuffer());
-  const signatureImage = await pdfDoc.embedPng(signatureImageBytes);
-  const pageHeight = page.getHeight();
-
-  // Caixa visual centralizada no espaço em branco acima de ASSINATURA DO(A) PROPONENTE.
-  // Ajustada para ficar mais baixa e mais centralizada, sem encostar no pontilhado.
-  const box = { x: 46, y: 735, width: 180, height: 42 };
-  const scale = Math.min(box.width / signatureImage.width, box.height / signatureImage.height);
-  const width = signatureImage.width * scale;
-  const height = signatureImage.height * scale;
-
-  page.drawImage(signatureImage, {
-    x: box.x + (box.width - width) / 2,
-    y: pageHeight - box.y - box.height + (box.height - height) / 2,
-    width,
-    height,
-  });
-}
 
 async function preencherPdf(payload) {
   if (!window.PDFLib) {
@@ -851,8 +723,6 @@ async function preencherPdf(payload) {
   drawTextInBox(page, pagamento.descontoFolha.esfera, B.pagamento.folhaEsfera, { font, size: 7 });
 
 
-  await drawSignatureOnPdf(pdfDoc, page, payload.assinaturaDataUrl);
-
   const pdfBytes = await pdfDoc.save();
   return new Blob([pdfBytes], { type: "application/pdf" });
 }
@@ -956,7 +826,7 @@ async function processarEnvio(event) {
     if (submitBtn) submitBtn.textContent = "Aguardando processamento da Assinafy...";
     await iniciarAssinaturaAssinafyComRetry(resultadoAssinafy.documentId);
 
-    alert("Documento gerado na Assinafy e enviado ao signatário para assinatura. Quando o signatário concluir, o documento final assinado será enviado para o proponente, para o signatário e para mais dois e-mails configurados.");
+    alert("Documento gerado na Assinafy e enviado para 2 signatários: PROPONENTE e SINDICATO. Quando todos assinarem, os 2 e-mails finais configurados receberão o documento assinado com a autenticidade da Assinafy.");
   } catch (error) {
     console.error("Erro no envio do formulário:", error);
     alert(error.message || "Erro ao gerar/enviar o PDF. Tente novamente.");
@@ -977,6 +847,5 @@ window.addEventListener("load", () => {
   if (proponentesContainer) proponentesContainer.innerHTML = "";
   gerarValorTotal();
   resetarFormaPagamento();
-  setupSignaturePad();
   atualizarStatusAssinatura();
 });

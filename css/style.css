@@ -498,65 +498,6 @@ textarea:focus {
   background: #15803d;
 }
 
-/* Assinatura digital */
-.signature-section {
-  border-color: rgba(34, 197, 94, 0.35);
-  background: linear-gradient(135deg, #ffffff, #f8fffb);
-}
-
-.signature-required {
-  display: inline-flex;
-  align-items: center;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: #dcfce7;
-  color: #166534;
-  font-size: 0.82rem;
-  font-weight: 800;
-}
-
-.signature-help {
-  margin: 10px 0 16px;
-  color: var(--muted);
-  font-weight: 600;
-  line-height: 1.5;
-}
-
-.signature-pad-wrap {
-  padding: 12px;
-  border: 2px dashed rgba(22, 101, 52, 0.35);
-  border-radius: 18px;
-  background: #fff;
-}
-
-.signature-canvas {
-  display: block;
-  width: 100%;
-  height: 190px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: #ffffff;
-  cursor: crosshair;
-  touch-action: none;
-}
-
-.signature-actions {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
-  margin-top: 14px;
-}
-
-.signature-status {
-  font-weight: 800;
-  color: #64748b;
-}
-
-.signature-status.signed {
-  color: #15803d;
-}
-
 /* Footer institucional simples */
 .site-footer {
   margin-top: 36px;
