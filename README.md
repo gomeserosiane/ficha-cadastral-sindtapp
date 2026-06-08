@@ -14,7 +14,9 @@
    - campo do PROPONENTE acima de **ASSINATURA DO(A) PROPONENTE**;
    - campo do SINDICATO acima de **ASSINATURA DO SINDICATO**.
 8. A Assinafy envia a solicitação de assinatura para os 2 signatários por e-mail.
-9. Quando todos assinarem, o webhook `/api/assinafy-webhook` baixa o PDF final assinado/certificado e envia para até 2 e-mails finais configurados.
+9. A cada novo envio, o sistema envia uma notificação para `FINAL_DOCUMENT_EMAIL_1` com a mensagem **Novo proponente cadastrado!!!**, contendo nome, CPF e data de nascimento do proponente.
+10. Quando todos assinarem, o webhook `/api/assinafy-webhook` baixa o PDF final assinado/certificado e envia para até 2 e-mails finais configurados.
+11. O campo **Estado civil** foi removido do formulário e da coleta de dados do projeto.
 
 ## Variáveis obrigatórias na Vercel
 
@@ -27,11 +29,14 @@ ASSINAFY_SIGNER_NAME=Nome do Signatário do Sindicato
 ASSINAFY_SIGNER_EMAIL=email_do_sindicato@dominio.com
 ASSINAFY_SIGNATURE_METHOD=collect
 
-# Escolha uma das opções abaixo:
-FINAL_DOCUMENT_EMAILS=email1@dominio.com,email2@dominio.com
-# ou
-FINAL_DOCUMENT_EMAIL=email1@dominio.com
+# E-mails finais que recebem o documento assinado/certificado quando todos assinarem.
+# FINAL_DOCUMENT_EMAIL_1 também recebe a notificação de novo proponente cadastrado.
+FINAL_DOCUMENT_EMAIL_1=email1@dominio.com
 FINAL_DOCUMENT_EMAIL_2=email2@dominio.com
+
+# Alternativas aceitas para destinatários finais:
+FINAL_DOCUMENT_EMAIL=email1@dominio.com
+FINAL_DOCUMENT_EMAILS=email1@dominio.com,email2@dominio.com
 
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=465

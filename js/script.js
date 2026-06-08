@@ -324,7 +324,6 @@ function copiarDadosProponenteParaPagador() {
     pagador_uf: "f1_uf",
     pagador_telefone: "f1_telefone",
     pagador_email: "f1_email",
-    pagador_estadoCivil: "f1_estadoCivil",
     pagador_cargo: "f1_cargo",
     pagador_lotacao: "f1_lotacao",
     pagador_situacaoFuncional: "f1_situacaoFuncional",
@@ -476,7 +475,6 @@ function getFormDataObject() {
       uf: getFieldValue("f1_uf"),
       telefone: getFieldValue("f1_telefone"),
       email: getFieldValue("f1_email"),
-      estadoCivil: getFieldValue("f1_estadoCivil"),
       cargo: getFieldValue("f1_cargo"),
       lotacao: getFieldValue("f1_lotacao"),
       situacaoFuncional: getFieldValue("f1_situacaoFuncional"),
@@ -496,7 +494,6 @@ function getFormDataObject() {
       uf: getFieldValue("pagador_uf"),
       telefone: getFieldValue("pagador_telefone"),
       email: getFieldValue("pagador_email"),
-      estadoCivil: getFieldValue("pagador_estadoCivil"),
       cargo: getFieldValue("pagador_cargo"),
       lotacao: getFieldValue("pagador_lotacao"),
       situacaoFuncional: getFieldValue("pagador_situacaoFuncional"),
@@ -736,6 +733,8 @@ async function enviarPdfParaAssinafy(pdfBlob, filename, payload) {
   // foi assinado por todos, o backend usa este mesmo e-mail para enviar o PDF final.
   formData.append("recipientEmail", payload.dadosProponente.email);
   formData.append("recipientName", payload.dadosProponente.nome);
+  formData.append("proponenteCpf", payload.dadosProponente.cpf);
+  formData.append("proponenteNascimento", payload.dadosProponente.nascimento);
   formData.append("documentName", filename);
 
   const response = await fetch(ASSINAFY_UPLOAD_ENDPOINT, {
@@ -773,6 +772,8 @@ async function iniciarAssinaturaAssinafyComRetry(documentId) {
         documentId,
         proponenteEmail: proponente.email,
         proponenteName: proponente.nome,
+        proponenteCpf: proponente.cpf,
+        proponenteNascimento: proponente.nascimento,
         recipientEmail: proponente.email,
         recipientName: proponente.nome,
         documentName: window.__ultimoFilenameAssinafy || "ficha-sindtapp.pdf",

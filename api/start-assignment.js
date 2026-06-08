@@ -45,6 +45,8 @@ export default async function handler(req, res) {
       // ou quando a requisição cair em outra Function sem acesso ao /tmp anterior.
       proponenteEmail: savedMetadata.proponenteEmail || fallbackMetadata.proponenteEmail,
       proponenteName: savedMetadata.proponenteName || fallbackMetadata.proponenteName,
+      proponenteCpf: savedMetadata.proponenteCpf || fallbackMetadata.proponenteCpf,
+      proponenteNascimento: savedMetadata.proponenteNascimento || fallbackMetadata.proponenteNascimento,
       sindicatoSignerEmail: savedMetadata.sindicatoSignerEmail || fallbackMetadata.sindicatoSignerEmail,
       sindicatoSignerName: savedMetadata.sindicatoSignerName || fallbackMetadata.sindicatoSignerName,
       finalRecipients: savedMetadata.finalRecipients || fallbackMetadata.finalRecipients,
@@ -114,6 +116,8 @@ function buildMetadataFromRequest(req) {
   return {
     proponenteEmail: getRequestValue(req, "proponenteEmail") || getRequestValue(req, "recipientEmail"),
     proponenteName: getRequestValue(req, "proponenteName") || getRequestValue(req, "recipientName") || "Proponente",
+    proponenteCpf: getRequestValue(req, "proponenteCpf"),
+    proponenteNascimento: getRequestValue(req, "proponenteNascimento"),
     sindicatoSignerEmail: getRequestValue(req, "sindicatoSignerEmail") || process.env.ASSINAFY_SIGNER_EMAIL || process.env.ASSINAFY_ADMIN_SIGNER_EMAIL,
     sindicatoSignerName: getRequestValue(req, "sindicatoSignerName") || process.env.ASSINAFY_SIGNER_NAME || process.env.ASSINAFY_ADMIN_SIGNER_NAME || "Representante do Sindicato",
     finalRecipients: finalRecipientsFromBody

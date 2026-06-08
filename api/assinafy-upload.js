@@ -6,7 +6,7 @@ import {
   getDocumentData,
 } from "../lib/assinafy.js";
 import { saveDocumentMetadata } from "../lib/document-store.js";
-import { getConfiguredFinalRecipients, isValidEmail, sendSignerInvitationEmail } from "../lib/email.js";
+import { getConfiguredFinalRecipients, isValidEmail, sendNewProponentNotificationEmail, sendSignerInvitationEmail } from "../lib/email.js";
 
 export const config = {
   api: {
@@ -45,6 +45,8 @@ export default async function handler(req, res) {
     const uploadedFile = getSingleFile(files.file);
     const proponenteEmail = getField(fields.recipientEmail);
     const proponenteName = getField(fields.recipientName) || "Proponente";
+    const proponenteCpf = getField(fields.proponenteCpf);
+    const proponenteNascimento = getField(fields.proponenteNascimento);
     const requestedDocumentName = getField(fields.documentName);
 
     if (!uploadedFile) return sendJson(res, 400, { message: "Nenhum PDF foi enviado." });
@@ -59,6 +61,8 @@ export default async function handler(req, res) {
     const metadata = {
       proponenteEmail,
       proponenteName,
+      proponenteCpf,
+      proponenteNascimento,
       sindicatoSignerEmail,
       sindicatoSignerName,
       finalRecipients,
@@ -87,7 +91,22 @@ export default async function handler(req, res) {
       });
     }
 
-    saveDocumentMetadata(documentId, metadata);
+    let newProponentNotification = null;
+    try {
+      newProponentNotification = await sendNewProponentNotificationEmail({
+        proponenteName,
+        proponenteCpf,
+        proponenteNascimento,
+      });
+    } catch (emailError) {
+      console.error("[SINDTAPP] Falha ao enviar notificação de novo proponente:", emailError);
+      newProponentNotification = { sent: false, error: emailError?.message || "Falha ao enviar notificação." };
+    }
+
+    saveDocumentMetadata(documentId, {
+      ...metadata,
+      newProponentNotification,
+    });
 
     return sendJson(res, 202, {
       message: "Documento criado na Assinafy. A assinatura dos 2 signatários será iniciada assim que o processamento terminar.",
@@ -95,6 +114,7 @@ export default async function handler(req, res) {
       proponenteEmail,
       sindicatoSignerEmail,
       finalRecipients,
+      newProponentNotification,
       nextStep: `/api/start-assignment?documentId=${documentId}`,
       assignmentCreated: false,
     });
